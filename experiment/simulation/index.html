@@ -1,13 +1,853 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-	<!-- Add CSS at the head of HTML file -->
-    <link rel="stylesheet" href="./css/main.css">
-</head>
-<body>
-		<!-- Your code goes here-->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Electrical Safety and Leakage Current Testing in Patient Monitors - 3D Virtual Lab</title>
+  
+  <!-- Google Fonts for Medical HUD and Technical Readouts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Inter:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="./css/main.css">
 
-	<!-- Add JS at the bottom of HTML file --> 
-        <script src="./js/main.js"></script>
+  <!-- Three.js CDN and OrbitControls CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body class="dark-theme">
+
+  <!-- Top Navigation Bar -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-title">Biomedical Virtual Lab</span>
+        <span class="brand-subtitle">Electrical Safety & Leakage Current Testing</span>
+      </div>
+    </div>
+
+    <nav class="header-nav">
+      <a href="#dashboard" class="nav-link active">Dashboard</a>
+      <a href="#lab3d-section" class="nav-link">3D Laboratory</a>
+      <a href="#testing-section" class="nav-link">Leakage Tests</a>
+      <a href="#history-section" class="nav-link">Test History</a>
+      <a href="#education-section" class="nav-link">Educational Guide</a>
+      <a href="#about-section" class="nav-link">About Project</a>
+    </nav>
+
+    <div class="header-status">
+      <div class="status-indicator-pill" id="system-status-pill">
+        <span class="status-dot pulsing"></span>
+        <span id="system-status-text">System Ready</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Prominent Mandatory Educational Safety Disclaimer -->
+  <section class="safety-banner-wrapper">
+    <div class="safety-banner">
+      <div class="safety-banner-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <div class="safety-banner-content">
+        <strong>ACADEMIC SAFETY DISCLAIMER:</strong>
+        <span>This application is an educational 3D simulation. It does not measure real electrical leakage current, connect to medical equipment, certify patient monitors, or establish compliance with medical electrical safety standards. Actual testing requires appropriate calibrated test equipment, applicable standards, and trained personnel. Never connect experimental or non-certified circuits directly to mains power or a human subject.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Container -->
+  <main class="main-container">
+
+    <!-- Section 1: Dashboard Overview KPIs -->
+    <section id="dashboard" class="dashboard-kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Device Under Test (DUT)</span>
+          <span class="kpi-badge badge-green" id="kpi-dut-status">DUT: ON</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-primary-val" id="kpi-dut-name">Patient Monitor</div>
+          <div class="kpi-sub-text">Simulated Class I, Type CF Applied Parts</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Active Test Mode</span>
+          <span class="kpi-badge badge-cyan" id="kpi-test-badge">Earth Leakage</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-primary-val" id="kpi-test-name">Earth Leakage (NC)</div>
+          <div class="kpi-sub-text">Protective Conductor Current Loop</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Simulated Leakage Current</span>
+          <span class="kpi-badge badge-amber" id="kpi-reading-badge">Real-time</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-primary-val digital-font" id="kpi-reading-val">--.- <span class="unit">µA</span></div>
+          <div class="kpi-sub-text">Measurement: Root-Mean-Square (RMS)</div>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Safety Evaluation</span>
+          <span class="kpi-badge badge-grey" id="kpi-eval-badge">NOT CONFIGURED</span>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-primary-val evaluation-text" id="kpi-eval-val">NOT CONFIGURED</div>
+          <div class="kpi-sub-text" id="kpi-eval-sub">No verified applicable threshold enabled</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: 3D Virtual Laboratory Viewport -->
+    <section id="lab3d-section" class="lab-stage-section">
+      <div class="section-header-bar">
+        <div class="section-title-group">
+          <h2>3D Virtual Biomedical Laboratory</h2>
+          <p>Interactive 3D workstation featuring Patient Monitor, Electrical Safety Analyzer (ESA), simulated patient phantom, and wiring harnesses.</p>
+        </div>
+        <div class="camera-controls-bar">
+          <button class="cam-btn active" data-view="overview" title="Full overview of the laboratory bench">Overview</button>
+          <button class="cam-btn" data-view="monitor" title="Focus view on Patient Monitor">Patient Monitor</button>
+          <button class="cam-btn" data-view="analyzer" title="Focus view on Electrical Safety Analyzer">Safety Analyzer</button>
+          <button class="cam-btn" data-view="wiring" title="Top-down schematic wiring view">Wiring View</button>
+          <button class="cam-btn secondary" id="reset-cam-btn" title="Reset Camera Orientation">Reset Camera</button>
+        </div>
+      </div>
+
+      <!-- 3D Canvas Container -->
+      <div class="canvas-wrapper" id="canvas-container">
+        <!-- Three.js renders inside this container -->
+        
+        <!-- Loading Overlay -->
+        <div id="canvas-loader" class="canvas-loader">
+          <div class="loader-spinner"></div>
+          <div class="loader-text">Initializing 3D Laboratory Environment...</div>
+          <div class="loader-sub">Building geometric models, materials, and measurement circuits</div>
+        </div>
+
+        <!-- WebGL / CDN Fallback Alert -->
+        <div id="webgl-error-overlay" class="webgl-fallback-overlay" style="display: none;">
+          <div class="error-modal-box">
+            <div class="error-modal-icon">⚠️</div>
+            <h3>3D Engine Notice</h3>
+            <p id="webgl-error-message">Three.js library is loading or WebGL is disabled in your browser.</p>
+            <button class="btn-primary" onclick="window.location.reload()">Reload Application</button>
+          </div>
+        </div>
+
+        <!-- 3D Overlay Floating HUD -->
+        <div class="canvas-floating-hud top-left">
+          <div class="hud-chip">
+            <span class="hud-label">DUT Power:</span>
+            <button class="hud-toggle-btn on" id="hud-power-btn" title="Toggle Patient Monitor Power">
+              <span class="toggle-dot"></span>
+              <span id="hud-power-text">ON</span>
+            </button>
+          </div>
+          <div class="hud-chip">
+            <span class="hud-label">Simulated Leads:</span>
+            <span class="hud-badge active" id="hud-leads-status">5-Lead ECG Connected</span>
+          </div>
+        </div>
+
+        <div class="canvas-floating-hud top-right">
+          <div class="hud-chip">
+            <span class="hud-label">Test Circuit Glow:</span>
+            <button class="hud-toggle-btn active" id="hud-glow-btn" title="Toggle active current path highlighting">
+              <span class="toggle-dot"></span>
+              <span>ACTIVE</span>
+            </button>
+          </div>
+          <div class="hud-chip">
+            <span class="hud-label">Interaction:</span>
+            <span class="hud-hint">Drag: Rotate | Scroll: Zoom | Right-drag: Pan | Click: Inspect</span>
+          </div>
+        </div>
+
+        <!-- Floating Info Panel on Active Test -->
+        <div class="canvas-floating-info-card" id="test-info-popup">
+          <div class="info-card-header">
+            <div class="info-tag" id="popup-test-type">EARTH LEAKAGE CURRENT</div>
+            <button class="info-card-close" id="popup-close-btn" title="Minimize Info">✕</button>
+          </div>
+          <div class="info-card-body">
+            <h4 id="popup-circuit-title">Measuring Current in Protective Earth Conductor</h4>
+            <p id="popup-circuit-desc">Evaluates current flowing from the mains supply through device internal capacitance/insulation to the protective earth conductor under normal and single fault conditions.</p>
+            <div class="circuit-path-indicator">
+              <span class="path-label">Active Flow Path:</span>
+              <span class="path-val" id="popup-active-path">Mains L/N → DUT Chassis → Protective Earth Lead → ESA Shunt (1kΩ MD)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3D Equipment Inspection Tag -->
+        <div class="equipment-inspect-tag" id="inspect-tag" style="display: none;">
+          <span class="inspect-title" id="inspect-title">Equipment</span>
+          <span class="inspect-desc" id="inspect-desc">Details</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Testing Workflow & Control Console -->
+    <section id="testing-section" class="testing-grid-section">
+
+      <!-- Left Column: Step-by-Step Educational Workflow Console -->
+      <div class="card control-console-card">
+        <div class="card-header">
+          <div class="header-icon-title">
+            <div class="header-icon cyan">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <div>
+              <h3>Electrical Safety Analyzer Console</h3>
+              <p class="subtitle">Standardized 9-Step Educational Testing Workflow</p>
+            </div>
+          </div>
+          <span class="status-pill status-ready" id="test-status-pill">IDLE</span>
+        </div>
+
+        <div class="card-body">
+
+          <!-- Workflow Step Guide -->
+          <div class="workflow-steps-tracker">
+            <div class="step-item active" id="step-1-tracker">
+              <div class="step-num">1</div>
+              <div class="step-label">DUT Power</div>
+            </div>
+            <div class="step-item" id="step-2-tracker">
+              <div class="step-num">2</div>
+              <div class="step-label">Select Test</div>
+            </div>
+            <div class="step-item" id="step-3-tracker">
+              <div class="step-num">3</div>
+              <div class="step-label">Wiring Check</div>
+            </div>
+            <div class="step-item" id="step-4-tracker">
+              <div class="step-num">4</div>
+              <div class="step-label">Execute</div>
+            </div>
+            <div class="step-item" id="step-5-tracker">
+              <div class="step-num">5</div>
+              <div class="step-label">Measurement</div>
+            </div>
+            <div class="step-item" id="step-6-tracker">
+              <div class="step-num">6</div>
+              <div class="step-label">Evaluation</div>
+            </div>
+          </div>
+
+          <!-- Step 1 & 2 Controls: Configuration -->
+          <div class="console-form-group">
+            <label for="test-type-select" class="form-label">
+              <span>Step 2: Select Leakage Current Test Category</span>
+              <span class="info-tooltip" title="Choose the specific electrical safety test pathway to measure.">ⓘ</span>
+            </label>
+            <select id="test-type-select" class="form-select">
+              <option value="earth_nc">1. Earth Leakage Current — Normal Condition (NC)</option>
+              <option value="earth_sfc_neutral">2. Earth Leakage Current — Single Fault (Open Neutral)</option>
+              <option value="enclosure_nc">3. Enclosure (Touch) Leakage — Normal Condition (NC)</option>
+              <option value="enclosure_sfc_earth">4. Enclosure (Touch) Leakage — Single Fault (Open Earth)</option>
+              <option value="patient_nc">5. Patient Leakage Current — Normal Condition (NC, Applied Parts to Earth)</option>
+              <option value="patient_sfc_earth">6. Patient Leakage Current — Single Fault (Open Earth)</option>
+              <option value="patient_sfc_mains">7. Patient Leakage Current — Mains Voltage on Applied Part (Type CF)</option>
+            </select>
+          </div>
+
+          <!-- Supply & Polarity Conditions Selector -->
+          <div class="console-form-row">
+            <div class="console-form-group half">
+              <label for="mains-polarity-select" class="form-label">Mains Supply Polarity</label>
+              <select id="mains-polarity-select" class="form-select small">
+                <option value="normal">Normal Polarity (L1 to L, L2 to N)</option>
+                <option value="reverse">Reverse Polarity (L1 to N, L2 to L)</option>
+              </select>
+            </div>
+            <div class="console-form-group half">
+              <label for="pe-condition-select" class="form-label">Protective Earth Switch</label>
+              <select id="pe-condition-select" class="form-select small">
+                <option value="closed">Earth Closed (Normal Condition)</option>
+                <option value="open">Earth Open (Single Fault Condition)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Connection Verification Checklist (Step 3) -->
+          <div class="connection-status-box">
+            <div class="box-title">Step 3: Virtual Connection Status</div>
+            <div class="checklist-grid">
+              <div class="check-item active" id="chk-mains">
+                <span class="chk-icon">✓</span>
+                <span class="chk-text">Mains Socket Plugged into Safety Analyzer</span>
+              </div>
+              <div class="check-item active" id="chk-earth">
+                <span class="chk-icon">✓</span>
+                <span class="chk-text">Protective Earth Continuity Verified</span>
+              </div>
+              <div class="check-item active" id="chk-probe">
+                <span class="chk-icon">✓</span>
+                <span class="chk-text">Chassis Enclosure Touch Probe Attached</span>
+              </div>
+              <div class="check-item active" id="chk-applied">
+                <span class="chk-icon">✓</span>
+                <span class="chk-text">ECG Leads (RA, LA, LL, RL, V) Connected</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Threshold Configuration Section (Section 7 Compliance) -->
+          <div class="threshold-config-box">
+            <div class="threshold-config-header">
+              <div class="threshold-header-title">
+                <input type="checkbox" id="enable-threshold-toggle" class="form-checkbox">
+                <label for="enable-threshold-toggle" class="checkbox-label">
+                  <strong>Explicit Threshold Configuration</strong>
+                </label>
+              </div>
+              <span class="config-status-badge unconfigured" id="config-status-tag">NOT CONFIGURED</span>
+            </div>
+            <p class="threshold-help-note">
+              Per educational guidelines, PASS/FAIL comparison is only executed when an applicable standard, equipment classification, test condition, and verified limit are explicitly enabled. If disabled, system reports <em>NOT CONFIGURED</em>.
+            </p>
+
+            <div class="threshold-input-fields" id="threshold-fields-container" style="display: none;">
+              <div class="threshold-grid">
+                <div class="form-group-sub">
+                  <label class="form-label-xs">Standard Reference Preset:</label>
+                  <select id="threshold-preset-select" class="form-select xs">
+                    <option value="custom">Custom Educational Benchmark</option>
+                    <option value="iec60601_class1_cf">IEC 60601-1 (Class I, Type CF Medical DUT)</option>
+                    <option value="iec60601_class1_bf">IEC 60601-1 (Class I, Type BF DUT)</option>
+                    <option value="iec62353_recurrent">IEC 62353 (Recurrent Hospital Testing)</option>
+                  </select>
+                </div>
+                <div class="form-group-sub">
+                  <label class="form-label-xs">Verified Limit Threshold (µA):</label>
+                  <div class="input-unit-wrap">
+                    <input type="number" id="threshold-limit-input" class="form-input xs" value="100.0" min="1" max="10000" step="0.1">
+                    <span class="input-unit-tag">µA</span>
+                  </div>
+                </div>
+              </div>
+              <div class="threshold-meta-info" id="threshold-meta-info">
+                <span>Rule: Measurement ≤ Configured Limit = PASS; Measurement > Limit = FAIL.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Real-Time Testing Progress Bar (Step 5) -->
+          <div class="test-progress-container">
+            <div class="progress-labels">
+              <span class="progress-stage-text" id="progress-stage-text">System Ready</span>
+              <span class="progress-percent" id="progress-percent">0%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="test-progress-bar" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <!-- Step 4 Action Buttons -->
+          <div class="console-actions-row">
+            <button class="btn btn-primary" id="btn-start-test">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              <span>Start Test</span>
+            </button>
+            <button class="btn btn-warning" id="btn-stop-test" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="6" width="12" height="12"/>
+              </svg>
+              <span>Stop Test</span>
+            </button>
+            <button class="btn btn-secondary" id="btn-reset-test">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="1 4 1 10 7 10"/>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+              </svg>
+              <span>Reset Test</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Right Column: Digital Safety Analyzer Instrument Faceplate -->
+      <div class="card instrument-faceplate-card">
+        <div class="card-header">
+          <div class="header-icon-title">
+            <div class="header-icon blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                <line x1="8" y1="21" x2="16" y2="21"/>
+                <line x1="12" y1="17" x2="12" y2="21"/>
+              </svg>
+            </div>
+            <div>
+              <h3>Simulated Digital Analyzer Display</h3>
+              <p class="subtitle">1 kHz Human Body Impedance Measuring Device (MD)</p>
+            </div>
+          </div>
+          <div class="instrument-brand-tag">ESA-7000 PRO</div>
+        </div>
+
+        <div class="card-body instrument-screen-body">
+          <!-- Digital Analyzer LCD Bezel -->
+          <div class="digital-lcd-bezel">
+            <div class="lcd-screen-inner">
+              <div class="lcd-top-bar">
+                <span class="lcd-chip" id="lcd-mode-tag">MODE: EARTH LEAKAGE</span>
+                <span class="lcd-chip" id="lcd-cond-tag">COND: NORMAL (NC)</span>
+                <span class="lcd-chip blink-active" id="lcd-state-tag">IDLE</span>
+              </div>
+
+              <div class="lcd-main-display">
+                <div class="lcd-primary-readout">
+                  <span class="lcd-digits" id="lcd-main-digits">000.0</span>
+                  <span class="lcd-unit">µA</span>
+                </div>
+                <div class="lcd-rms-label">TRUE RMS AC+DC LEAKAGE CURRENT</div>
+              </div>
+
+              <!-- Bar Meter Simulation -->
+              <div class="lcd-analog-meter">
+                <div class="meter-scale-markers">
+                  <span>0</span>
+                  <span>50</span>
+                  <span>100</span>
+                  <span>250</span>
+                  <span>500</span>
+                  <span>1000 µA</span>
+                </div>
+                <div class="meter-bar-track">
+                  <div class="meter-bar-level" id="lcd-meter-bar" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <!-- Threshold & Status Feedback Strip -->
+              <div class="lcd-footer-strip">
+                <div class="lcd-footer-col">
+                  <span class="strip-label">CONFIGURED LIMIT:</span>
+                  <span class="strip-val" id="lcd-threshold-val">NONE (UNCONFIGURED)</span>
+                </div>
+                <div class="lcd-footer-col">
+                  <span class="strip-label">STATUS VERDICT:</span>
+                  <span class="strip-val verdict-badge-lcd" id="lcd-verdict-tag">READY</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Evaluation Card (Steps 7 & 8) -->
+          <div class="evaluation-detail-box" id="eval-detail-box">
+            <div class="eval-header">
+              <span class="eval-title">Safety Evaluation & Compliance Analysis</span>
+              <span class="eval-badge-pill" id="eval-result-badge">NOT CONFIGURED</span>
+            </div>
+            <p class="eval-desc" id="eval-result-desc">
+              No verified applicable threshold has been explicitly configured. To calculate PASS or FAIL compliance, enable explicit threshold configuration in Step 3 and select an applicable standard and limit.
+            </p>
+            <div class="eval-meta-grid">
+              <div class="meta-item">
+                <span class="meta-label">Simulated Value:</span>
+                <span class="meta-val" id="eval-sim-val">--.- µA</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Threshold Applied:</span>
+                <span class="meta-val" id="eval-thresh-val">Not Configured</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Test Timestamp:</span>
+                <span class="meta-val" id="eval-time-val">--:--:--</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Record State:</span>
+                <span class="meta-val" id="eval-record-val">Pending Execution</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Device Under Test (Patient Monitor) Monitor Screen Mirror -->
+          <div class="dut-mirror-box">
+            <div class="dut-mirror-header">
+              <span>Patient Monitor Live Screen Mirror (Simulated Values)</span>
+              <span class="dut-status-tag" id="dut-mirror-status">DUT: RUNNING</span>
+            </div>
+            <div class="dut-screen-preview">
+              <canvas id="mirror-ecg-canvas" width="480" height="120"></canvas>
+              <div class="dut-vital-overlay">
+                <div class="vital-block ecg">
+                  <span class="vital-label">HR</span>
+                  <span class="vital-num" id="mirror-hr-val">72</span>
+                  <span class="vital-unit">BPM</span>
+                </div>
+                <div class="vital-block spo2">
+                  <span class="vital-label">SpO2</span>
+                  <span class="vital-num" id="mirror-spo2-val">98</span>
+                  <span class="vital-unit">%</span>
+                </div>
+                <div class="vital-block resp">
+                  <span class="vital-label">RESP</span>
+                  <span class="vital-num" id="mirror-resp-val">16</span>
+                  <span class="vital-unit">RPM</span>
+                </div>
+              </div>
+            </div>
+            <div class="dut-disclaimer-tiny">
+              * Simulated educational vital signs. Not real patient physiology.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Section 4: Test History Log Table & CSV Export -->
+    <section id="history-section" class="history-section">
+      <div class="card history-card">
+        <div class="card-header">
+          <div class="header-icon-title">
+            <div class="header-icon green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </div>
+            <div>
+              <h3>Standardized Test History & Audit Trail</h3>
+              <p class="subtitle">Complete log of all simulated leakage current measurements stored locally in browser</p>
+            </div>
+          </div>
+          <div class="history-actions-bar">
+            <button class="btn btn-outline" id="btn-export-csv" title="Download test audit log as a CSV spreadsheet">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span>Export CSV</span>
+            </button>
+            <button class="btn btn-outline-danger" id="btn-clear-history" title="Clear all local test records">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+              <span>Clear History</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="history-table" id="test-history-table">
+              <thead>
+                <tr>
+                  <th>Test ID</th>
+                  <th>Date & Time</th>
+                  <th>Test Category</th>
+                  <th>Condition</th>
+                  <th>Simulated Reading</th>
+                  <th>Configured Threshold</th>
+                  <th>Safety Verdict</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="history-table-body">
+                <!-- Dynamically generated rows or empty placeholder -->
+                <tr class="empty-row" id="empty-history-row">
+                  <td colspan="8">
+                    <div class="empty-state">
+                      <div class="empty-state-icon">📋</div>
+                      <p>No electrical safety tests logged yet.</p>
+                      <span class="empty-state-sub">Select a test from the console above and click "Start Test" to log simulated measurements.</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="history-storage-note">
+            <span>ℹ️ <strong>Client Storage Note:</strong> Test history records are persisted securely inside your local web browser using HTML5 <code>localStorage</code>. No external data is transmitted.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: In-Depth Educational Guide (Section 10 Requirements) -->
+    <section id="education-section" class="education-section">
+      <div class="card education-card">
+        <div class="card-header">
+          <div class="header-icon-title">
+            <div class="header-icon purple">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              </svg>
+            </div>
+            <div>
+              <h3>Biomedical Engineering Educational Guide</h3>
+              <p class="subtitle">Theoretical foundations, physiological shock thresholds, and IEC 60601-1 compliance</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body education-content">
+
+          <!-- Educational Sub-grid -->
+          <div class="edu-article-grid">
+
+            <article class="edu-article-card">
+              <div class="edu-card-icon">⚡</div>
+              <h4>1. What is Electrical Safety in Healthcare?</h4>
+              <p>
+                In clinical healthcare, patient safety requires stringent control of stray electrical currents. Patients in intensive care units (ICUs) and operating theatres (OTs) frequently have reduced skin resistance, are connected to invasive catheters, or may be anesthetized and incapable of feeling or reacting to an electric shock. Electrical safety protocols ensure that all electro-medical equipment (ME equipment) protects patients and healthcare workers against electric shock, burns, and unintended cardiac stimulation.
+              </p>
+            </article>
+
+            <article class="edu-article-card">
+              <div class="edu-card-icon">🌊</div>
+              <h4>2. What is Leakage Current?</h4>
+              <p>
+                Leakage current is the non-functional current that unintentionally flows from an energized AC or DC circuit to earth, the chassis/enclosure, or applied parts. It arises primarily from:
+              </p>
+              <ul>
+                <li><strong>Capacitive coupling:</strong> AC current traversing stray capacitances across power transformer windings, filter capacitors, and internal wiring.</li>
+                <li><strong>Finite insulation resistance:</strong> Real-world dielectric materials exhibit high but finite resistance, permitting minute resistive current flow.</li>
+              </ul>
+              <p>
+                Capacitive reactance is defined mathematically as \(X_C = \frac{1}{2\pi f C}\). At 50 Hz or 60 Hz mains frequency, even picofarads of stray capacitance produce measurable microamperes of leakage current.
+              </p>
+            </article>
+
+            <article class="edu-article-card">
+              <div class="edu-card-icon">❤️</div>
+              <h4>3. Why is Testing Critical in Patient Monitors?</h4>
+              <p>
+                Patient monitors attach conductive ECG electrodes directly to the human thorax, creating a low-resistance path to heart muscle tissue. This exposes patients to two distinct shock mechanisms:
+              </p>
+              <ul>
+                <li><strong>Macroshock:</strong> Current flowing across intact skin from arm to arm or arm to leg. Typical perception threshold is ~1 mA; ventricular fibrillation occurs above 50–100 mA.</li>
+                <li><strong>Microshock:</strong> Current conducted directly to the myocardium via intracardiac catheter or conductive lead. Because current density at the heart wall is extremely high, <strong>as little as 10 to 50 µA</strong> can trigger fatal ventricular fibrillation.</li>
+              </ul>
+            </article>
+
+            <article class="edu-article-card">
+              <div class="edu-card-icon">🔬</div>
+              <h4>4. What is an Electrical Safety Analyzer (ESA)?</h4>
+              <p>
+                An Electrical Safety Analyzer is a specialized biomedical test instrument that simulates standard line faults, measures leakage currents, and verifies protective earth continuity.
+              </p>
+              <p>
+                The analyzer incorporates a standardized <strong>Measuring Device (MD)</strong> defined by IEC 60601-1. The MD consists of a 1000 Ω non-inductive resistor paralleled with an RC low-pass filter (0.15 µF capacitor in series with a 10 kΩ resistor). This circuit accurately mimics the human body impedance and frequency-dependent physiological response to electrical shock.
+              </p>
+            </article>
+
+          </div>
+
+          <!-- Comparison Table: Earth vs Enclosure vs Patient Leakage -->
+          <div class="comparison-section">
+            <h4>5. In-Depth Comparison of Leakage Current Categories</h4>
+            <div class="table-responsive">
+              <table class="edu-compare-table">
+                <thead>
+                  <tr>
+                    <th>Leakage Category</th>
+                    <th>Measurement Path</th>
+                    <th>Normal Condition (NC)</th>
+                    <th>Single Fault Condition (SFC)</th>
+                    <th>Primary Clinical Hazard</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Earth Leakage</strong></td>
+                    <td>From mains supply through internal insulation to the protective earth conductor.</td>
+                    <td>Continuous current flowing harmlessly to ground when earth is intact.</td>
+                    <td>Earth conductor severed or broken. Current is forced through operator or chassis.</td>
+                    <td>Chassis elevates in voltage; hazard to operator touching casing.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Enclosure (Touch) Leakage</strong></td>
+                    <td>From accessible conductive chassis surfaces to earth via operator touch.</td>
+                    <td>Operator touches monitor chassis; micro-current flows through hands to ground.</td>
+                    <td>Protective earth severed; entire leakage current flows through human body to ground.</td>
+                    <td>Macroshock hazard to nurses, physicians, or visiting family members.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Patient Leakage</strong></td>
+                    <td>From applied parts (ECG electrodes) through patient to earth, or between applied parts.</td>
+                    <td>Current flowing through patient leads to ground under normal operation.</td>
+                    <td>Mains voltage appears on applied parts or protective earth conductor is broken.</td>
+                    <td>Direct microshock / ventricular fibrillation induction.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- IEC 60601-1 & IEC 62353 Standards Context -->
+          <div class="standards-explainer-box">
+            <h4>6. Relevance of Medical Electrical Safety Standards (IEC 60601-1 & IEC 62353)</h4>
+            <div class="standards-points">
+              <div class="point-item">
+                <strong>Equipment Classification:</strong>
+                <p><strong>Class I:</strong> Basic insulation with protective earthing (chassis bonded to green/yellow ground wire).<br>
+                <strong>Class II:</strong> Double or reinforced insulation with no dependence on protective earthing.</p>
+              </div>
+              <div class="point-item">
+                <strong>Applied Part Classification:</strong>
+                <p><strong>Type B:</strong> Applied parts not direct to heart, e.g., hospital beds, phototherapy.<br>
+                <strong>Type BF:</strong> Floating applied parts electrically isolated from earth, e.g., blood pressure cuffs, external ultrasound.<br>
+                <strong>Type CF:</strong> Cardiac Floating applied parts with highest degree of isolation for direct cardiac contact (e.g., Patient Monitor ECG leads).</p>
+              </div>
+              <div class="point-item">
+                <strong>Normal Condition (NC) vs Single Fault Condition (SFC):</strong>
+                <p>Standardized safety testing evaluates equipment under pristine working conditions (NC) and simulated single failures (SFC) such as open protective earth, open neutral, or reversed mains polarity to guarantee fail-safe clinical operation.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Professional Testing Mandate -->
+          <div class="pro-mandate-card">
+            <h4>7. Why Real Testing Demands Calibrated Equipment & Qualified Personnel</h4>
+            <p>
+              Actual hospital safety inspections cannot be approximated by hobbyist digital multimeters (DMMs). Certified biomedical testing requires:
+            </p>
+            <ul>
+              <li>Calibrated Electrical Safety Analyzers certified with traceable standards (NIST, ISO/IEC 17025).</li>
+              <li>Standardized 1000 Ω frequency-weighted Human Body Measuring Devices (MD).</li>
+              <li>Strict test protocols adhering to institutional clinical engineering procedures.</li>
+              <li>Certified Biomedical Equipment Technicians (CBET) or Clinical Engineers trained in electrical safety hazard management.</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: About Project & Mini-Project Academic Documentation -->
+    <section id="about-section" class="about-section">
+      <div class="card about-card">
+        <div class="card-header">
+          <div class="header-icon-title">
+            <div class="header-icon cyan">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+            </div>
+            <div>
+              <h3>B.Tech Biomedical Engineering Mini-Project Documentation</h3>
+              <p class="subtitle">Academic objectives, working principle, methodology, and engineering scope</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body project-doc-body">
+          <div class="doc-block">
+            <h4>Project Title</h4>
+            <p class="highlight-title">Electrical Safety and Leakage Current Testing in Patient Monitors: A 3D Interactive Virtual Laboratory</p>
+          </div>
+
+          <div class="doc-grid">
+            <div class="doc-cell">
+              <h5>Project Objective</h5>
+              <p>To design and implement a zero-dependency, browser-accessible 3D virtual laboratory that demonstrates the principles of electrical safety testing, leakage current measurement pathways, and IEC 60601-1 testing workflows on critical care patient monitoring equipment.</p>
+            </div>
+
+            <div class="doc-cell">
+              <h5>Working Principle</h5>
+              <p>Simulates the operation of an Electrical Safety Analyzer (ESA) featuring an IEC 60601-1 compliant Measuring Device (1 kΩ non-inductive shunt with low-pass frequency weighting). Illustrates current loops under Normal Condition (NC) and Single Fault Conditions (SFC).</p>
+            </div>
+
+            <div class="doc-cell">
+              <h5>Methodology</h5>
+              <p>Constructed utilizing Vanilla JavaScript and Three.js procedural 3D modeling without external mesh dependencies. Features real-time canvas-projected LCD waveforms, dynamic cable glow shaders, interactive raycasting, and standardized client-side data logging.</p>
+            </div>
+
+            <div class="doc-cell">
+              <h5>Clinical & Educational Applications</h5>
+              <p>Provides risk-free pre-lab training for undergraduate biomedical and electrical engineering students, hospital clinical engineering interns, and medical device maintenance technicians before handling live mains-powered analyzers.</p>
+            </div>
+
+            <div class="doc-cell">
+              <h5>System Limitations</h5>
+              <p>Generates illustrative simulated mathematical measurements for conceptual demonstration. Does not interface with hardware GPIO/serial ports or certify real physical medical equipment.</p>
+            </div>
+
+            <div class="doc-cell">
+              <h5>Future Scope</h5>
+              <p>Future iterations may integrate WebXR/VR headsets for immersive spatial laboratory training, WebSerial API support for physical Fluke/Rigel safety analyzer hardware telemetry, and automated IEC 62353 periodic test sequencing.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Clear History Confirmation Modal Dialog -->
+  <div class="modal-backdrop" id="clear-modal" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-icon-danger">⚠️</div>
+        <h3>Clear Test History?</h3>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete all logged electrical safety test records from this browser's local storage?</p>
+        <p class="modal-sub">This action cannot be undone. You may export your audit trail as a CSV file before clearing.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modal-cancel-btn">Cancel</button>
+        <button class="btn btn-danger" id="modal-confirm-btn">Yes, Delete All Records</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Application Footer -->
+  <footer class="app-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span>B.Tech Biomedical Engineering / Electrical Engineering Virtual Laboratory</span>
+        <span class="footer-tech">Engineered with HTML5, CSS3, Vanilla JavaScript, and Three.js</span>
+      </div>
+      <div class="footer-disclaimer">
+        <span>Educational Simulation Only — Not for Real Medical Equipment Certification</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Main JavaScript Application Logic -->
+  <script src="./js/main.js"></script>
+
 </body>
 </html>
